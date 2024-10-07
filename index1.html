@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Color Matching Game</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.5.2/animate.min.css">
+    <style>
+        body {
+            background: rgb(52, 52, 50);
+            background: linear-gradient(0deg, rgba(52, 52, 50, 1) 0%, rgba(74, 143, 164, 1) 100%);
+            font-family: 'Roboto', sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #canvas {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 10px;
+            margin-top: 20px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            color: transparent;
+            border: 2px solid #000;
+            border-radius: 5px;
+        }
+        .matched {
+            background-color: green;
+            color: white;
+        }
+        .flipped {
+            color: black;
+        }
+        #finished {
+            display: none; 
+            position: relative;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 5px;
+        }
+        #restart {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="header">
+            <h1 class="title">Color Matching Game</h1>
+            <h2 class="description">Use your memory to match each card with the corresponding card of the same color.</h2>
+            <h2 class="description">Match all the cards to win!</h2>
+        </div>
+        <div id="score">Score: 0</div>
+        <div id="timer">Time Remaining: 30s</div>
+        <div id="canvas" class="animated bounce">
+        </div>
+        <div id="finished">
+            <p>Your Score: <span id="final-score">0</span></p>
+            <button id="restart" class="animated tada">Thanks for Playing! Click here to reset.</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function() {
+            const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+            let cardValues = [...colors, ...colors]; 
+            let score = 0;
+            let timerDuration = 30; 
+            let timer;
+            let firstCard, secondCard;
+            let lockBoard = false; 
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+            function createCards() {
+                shuffle(cardValues);
+                $('#canvas').empty(); 
+                cardValues.forEach((color, index) => {
+                    const card = $(`<div class="card" data-color="${color}" data-index="${index}"></div>`);
+                    $('#canvas').append(card);
+                });
+            }function startGame() {
+                score = 0;
+                $('#score').text(`Score: ${score}`);
+                $('#timer').text(`Time Remaining: ${timerDuration}s`);
+                $('#finished').hide(); 
+                createCards(); 
+                clearInterval(timer); 
+                timerDuration = 30; 
+                timer = setInterval(function() {
+                    timerDuration--;
+                    $('#timer').text(`Time Remaining: ${timerDuration}s`); 
+                    if (timerDuration <= 0) {
+                        clearInterval(timer); 
+                        endGame(); 
+                    }
+                }, 1000); 
+            }
+            function endGame() {
+                $('#finished').show(); 
+                $('#final-score').text(score); 
+                clearInterval(timer); 
+            }
+            $('#canvas').on('click', '.card', function() {
+                if (lockBoard || $(this).hasClass('matched') || $(this).hasClass('flipped')) return;
+                $(this).addClass('flipped').css('background-color', $(this).data('color'));
+                if (!firstCard) {
+                    firstCard = $(this);
+                } else {
+                    secondCard = $(this);
+                    lockBoard = true;
+                    if (firstCard.data('color') === secondCard.data('color')) {
+                        firstCard.addClass('matched');
+                        secondCard.addClass('matched');
+                        score += 1; 
+                        $('#score').text(`Score: ${score}`);
+                        resetCards();
+                    } else {
+                        setTimeout(() => {
+                            firstCard.removeClass('flipped').css('background-color', '#ddd');
+                            secondCard.removeClass('flipped').css('background-color', '#ddd');
+                            resetCards();
+                        }, 1000); 
+                    }
+                }
+            }); 
+            function resetCards() {
+                firstCard = null;
+                secondCard = null;
+                lockBoard = false;
+            }
+            $('#restart').click(function() {
+                startGame();
+            });
+            startGame();
+        });
+    </script>
+</body>
+</html>
